@@ -12,6 +12,15 @@ import 'package:food_seller/features/onboarding/domain/repositories/onboarding_r
 import 'package:food_seller/features/onboarding/domain/usecases/check_store_exists_usecase.dart';
 import 'package:food_seller/features/onboarding/domain/usecases/create_store_usecase.dart';
 import 'package:food_seller/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:food_seller/features/orders/data/datasources/order_remote_datasource.dart';
+import 'package:food_seller/features/orders/data/repositories/order_repository_impl.dart';
+import 'package:food_seller/features/orders/domain/repositories/order_repository.dart';
+import 'package:food_seller/features/orders/domain/usecases/get_order_details_usecase.dart';
+import 'package:food_seller/features/orders/domain/usecases/get_orders_usecase.dart';
+import 'package:food_seller/features/orders/domain/usecases/listen_to_order_changes_usecase.dart';
+import 'package:food_seller/features/orders/domain/usecases/update_order_status_usecase.dart';
+import 'package:food_seller/features/orders/presentation/cubit/order_details_cubit.dart'; // *** ایمپورت جدید ***
+import 'package:food_seller/features/orders/presentation/cubit/order_management_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -52,6 +61,37 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<OnboardingRemoteDataSource>(
     () => OnboardingRemoteDataSourceImpl(supabaseClient: sl()),
+  );
+
+  // --- Order Management ---
+  sl.registerFactoryParam<OrderManagementCubit, int, void>(
+    (storeId, _) => OrderManagementCubit(
+      getOrdersUseCase: sl(),
+      listenToOrderChangesUseCase: sl(),
+      updateOrderStatusUseCase: sl(),
+      storeId: storeId,
+    ),
+  );
+  
+  // *** شروع بخش جدید ***
+  // --- Order Details ---
+  sl.registerFactory(() => OrderDetailsCubit(
+        getOrderDetailsUseCase: sl(),
+      ));
+  // *** پایان بخش جدید ***
+
+  // UseCases (از قبل ثبت شده)
+  sl.registerLazySingleton(() => GetOrdersUseCase(sl()));
+  sl.registerLazySingleton(() => ListenToOrderChangesUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateOrderStatusUseCase(sl()));
+  sl.registerLazySingleton(() => GetOrderDetailsUseCase(sl()));
+  // Repository (از قبل ثبت شده)
+  sl.registerLazySingleton<OrderRepository>(
+    () => OrderRepositoryImpl(remoteDataSource: sl()),
+  );
+  // DataSource (از قبل ثبت شده)
+  sl.registerLazySingleton<OrderRemoteDataSource>(
+    () => OrderRemoteDataSourceImpl(supabaseClient: sl()),
   );
 
   // #endregion

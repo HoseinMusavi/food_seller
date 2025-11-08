@@ -3,18 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_seller/core/di/service_locator.dart';
 import 'package:food_seller/features/auth/presentation/cubit/auth_cubit.dart';
+// *** ایمپورت‌های جدید ***
+import 'package:food_seller/features/orders/presentation/cubit/order_management_cubit.dart';
+import 'package:food_seller/features/orders/presentation/pages/order_dashboard_page.dart';
 
-// صفحات موقت برای تب‌ها (در فازهای بعد ساخته می‌شوند)
-class OrdersPagePlaceholder extends StatelessWidget {
-  const OrdersPagePlaceholder({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("صفحه سفارش‌ها\n(طراحی صفحه ۱)")),
-    );
-  }
-}
-
+// --- صفحات موقت برای تب‌های دیگر ---
 class MenuPagePlaceholder extends StatelessWidget {
   const MenuPagePlaceholder({super.key});
   @override
@@ -24,7 +17,6 @@ class MenuPagePlaceholder extends StatelessWidget {
     );
   }
 }
-
 class SettingsPagePlaceholder extends StatelessWidget {
   const SettingsPagePlaceholder({super.key});
   @override
@@ -34,7 +26,7 @@ class SettingsPagePlaceholder extends StatelessWidget {
     );
   }
 }
-// پایان صفحات موقت
+// --- پایان صفحات موقت ---
 
 
 class MainShell extends StatefulWidget {
@@ -54,12 +46,12 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _widgetOptions = <Widget>[
-      const OrdersPagePlaceholder(), // تب ۰: سفارش‌ها
+      // *** جایگزین شد: ***
+      const OrderDashboardPage(),  // تب ۰: سفارش‌ها
       const MenuPagePlaceholder(),   // تب ۱: منو
       const SettingsPagePlaceholder(), // تب ۲: تنظیمات
     ];
   }
-
 
   void _onItemTapped(int index) {
     setState(() {
@@ -69,10 +61,21 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    // ما در اینجا AuthCubit را (که در فاز ۱ ساختیم) فراهم می‌کنیم
-    // تا در صفحه تنظیمات بتوانیم از آن برای خروج (Logout) استفاده کنیم
-    return BlocProvider(
-      create: (context) => sl<AuthCubit>(),
+    // ما Cubitها را در اینجا فراهم می‌کنیم تا در تمام تب‌ها در دسترس باشند
+    return MultiBlocProvider(
+      providers: [
+        // AuthCubit برای دکمه خروج در صفحه تنظیمات
+        BlocProvider(
+          create: (context) => sl<AuthCubit>(),
+        ),
+        // *** OrderManagementCubit اینجا فراهم می‌شود ***
+        BlocProvider(
+          create: (context) => sl<OrderManagementCubit>(
+            param1: widget.storeId, // storeId حیاتی را به Cubit پاس می‌دهیم
+          )..loadOrders(), // و بلافاصله دستور بارگذاری سفارش‌ها را می‌دهیم
+        ),
+        // TODO: در فازهای بعد Cubitهای Menu و Settings را اضافه می‌کنیم
+      ],
       child: Scaffold(
         body: IndexedStack(
           index: _selectedIndex,
