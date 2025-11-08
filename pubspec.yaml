@@ -1,0 +1,65 @@
+name: food_seller
+description: "A new Flutter project."
+publish_to: 'none' 
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  flutter_localizations: 
+    sdk: flutter
+
+  # --- Core ---
+  cupertino_icons: ^1.0.8
+  equatable: ^2.0.7
+  dartz: ^0.10.1
+  get_it: ^8.0.3
+  
+  # *** خط زیر اصلاح شد ***
+  intl: ^0.20.2 # قبلاً ^0.19.0 بود
+
+  # --- State Management ---
+  bloc: ^9.0.0
+  flutter_bloc: ^9.1.1
+
+  # --- Networking ---
+  supabase_flutter: ^2.9.1
+  dio: ^5.8.0+1 
+
+  # --- UI/UX ---
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0 
+  flutter_rating_bar: ^4.0.1 
+  
+  # --- Map & Location ---
+  geolocator: ^12.0.0
+  flutter_map: ^6.1.0 
+  latlong2: ^0.9.1 
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/fonts/
+
+  fonts:
+    - family: Vazir
+      fonts:
+        - asset: assets/fonts/Vazirmatn-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Vazirmatn-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Vazirmatn-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Vazirmatn-Bold.ttf
+          weight: 700
