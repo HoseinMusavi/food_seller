@@ -3,20 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_seller/core/di/service_locator.dart';
 import 'package:food_seller/features/auth/presentation/cubit/auth_cubit.dart';
-// *** ایمپورت‌های جدید ***
 import 'package:food_seller/features/orders/presentation/cubit/order_management_cubit.dart';
 import 'package:food_seller/features/orders/presentation/pages/order_dashboard_page.dart';
 
-// --- صفحات موقت برای تب‌های دیگر ---
-class MenuPagePlaceholder extends StatelessWidget {
-  const MenuPagePlaceholder({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("صفحه مدیریت منو\n(طراحی صفحه ۲)")),
-    );
-  }
-}
+// *** ایمپورت‌های جدید برای فاز ۳ ***
+import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
+import 'package:food_seller/features/product/presentation/pages/menu_management_page.dart';
+
+
+// --- صفحه موقت برای تب تنظیمات ---
 class SettingsPagePlaceholder extends StatelessWidget {
   const SettingsPagePlaceholder({super.key});
   @override
@@ -26,8 +21,7 @@ class SettingsPagePlaceholder extends StatelessWidget {
     );
   }
 }
-// --- پایان صفحات موقت ---
-
+// --- پایان صفحه موقت ---
 
 class MainShell extends StatefulWidget {
   final int storeId; // ID فروشگاه را از AuthWrapper دریافت می‌کنیم
@@ -38,7 +32,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 0; // شروع از تب سفارش‌ها
+  int _selectedIndex = 0;
 
   late final List<Widget> _widgetOptions;
 
@@ -46,9 +40,11 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _widgetOptions = <Widget>[
+      const OrderDashboardPage(), // تب ۰: سفارش‌ها
+      
       // *** جایگزین شد: ***
-      const OrderDashboardPage(),  // تب ۰: سفارش‌ها
-      const MenuPagePlaceholder(),   // تب ۱: منو
+      const MenuManagementPage(), // تب ۱: منو
+      
       const SettingsPagePlaceholder(), // تب ۲: تنظیمات
     ];
   }
@@ -61,20 +57,25 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    // ما Cubitها را در اینجا فراهم می‌کنیم تا در تمام تب‌ها در دسترس باشند
     return MultiBlocProvider(
       providers: [
-        // AuthCubit برای دکمه خروج در صفحه تنظیمات
+        // AuthCubit برای دکمه خروج
         BlocProvider(
           create: (context) => sl<AuthCubit>(),
         ),
-        // *** OrderManagementCubit اینجا فراهم می‌شود ***
+        // Cubit سفارش‌ها (از فاز ۲)
         BlocProvider(
           create: (context) => sl<OrderManagementCubit>(
-            param1: widget.storeId, // storeId حیاتی را به Cubit پاس می‌دهیم
-          )..loadOrders(), // و بلافاصله دستور بارگذاری سفارش‌ها را می‌دهیم
+            param1: widget.storeId,
+          )..loadOrders(),
         ),
-        // TODO: در فازهای بعد Cubitهای Menu و Settings را اضافه می‌کنیم
+        
+        // *** Cubit جدید برای مدیریت منو ***
+        BlocProvider(
+          create: (context) => sl<MenuManagementCubit>(
+            param1: widget.storeId,
+          )..loadMenu(), // ..loadMenu() را بلافاصله فراخوانی می‌کند
+        ),
       ],
       child: Scaffold(
         body: IndexedStack(

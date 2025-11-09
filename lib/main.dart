@@ -1,13 +1,17 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:food_seller/features/product/domain/entities/product_category_entity.dart';
+import 'package:food_seller/features/product/presentation/pages/product_editor_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // *** ایمپورت Bloc ***
 
-// --- فایل‌های پروژه جدید ---
 import 'package:food_seller/core/di/service_locator.dart' as di;
 import 'package:food_seller/core/theme/app_theme.dart';
 import 'package:food_seller/features/auth/presentation/pages/login_page.dart';
-import 'package:food_seller/auth_wrapper.dart'; // <-- مسیریاب هوشمند جدید
+import 'package:food_seller/auth_wrapper.dart'; 
+// *** ایمپورت Cubit ***
+import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,11 +43,58 @@ class MyApp extends StatelessWidget {
       ],
       theme: AppTheme.lightTheme,
       home: const AuthGate(),
+      // *** فعال کردن onGenerateRoute ***
+      onGenerateRoute: _onGenerateRoute, 
     );
+  }
+
+  // *** تابع مسیریابی جدید ***
+  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case '/add-product':
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          final int? storeId = args['storeId'];
+          final List<ProductCategoryEntity>? categories = args['categories'];
+          final MenuManagementCubit? menuCubit = args['menuCubit'];
+
+          if (storeId != null && categories != null && menuCubit != null) {
+            return MaterialPageRoute(
+              // ما Cubit صفحه "منو" را به صفحه "ویرایشگر" می‌دهیم
+              // تا پس از ذخیره، بتوانیم آن را رفرش کنیم
+              builder: (_) => BlocProvider.value(
+                value: menuCubit,
+                child: ProductEditorPage(
+                  storeId: storeId,
+                  categories: categories,
+                ),
+              ),
+            );
+          }
+        }
+        return _errorRoute();
+
+      // (در آینده)
+      // case '/edit-product':
+      //   ...
+      //   return MaterialPageRoute(...)
+
+      default:
+        return null;
+    }
+  }
+
+  Route<dynamic> _errorRoute() {
+    return MaterialPageRoute(builder: (_) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('خطا')),
+        body: const Center(child: Text('خطا در بارگذاری صفحه')),
+      );
+    });
   }
 }
 
-// --- AuthGate (دروازه احراز هویت) - نسخه نهایی ---
+// --- AuthGate (بدون تغییر) ---
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -54,10 +105,8 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         final session = snapshot.data?.session;
         if (session != null) {
-          // کاربر لاگین است -> وضعیت فروشگاه او را چک کن
           return const AuthWrapper();
         } else {
-          // کاربر لاگین نیست -> به صفحه ورود بفرست
           return const LoginPage();
         }
       },
