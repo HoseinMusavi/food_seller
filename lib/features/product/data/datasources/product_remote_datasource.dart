@@ -10,8 +10,6 @@ abstract class ProductRemoteDataSource {
   Future<void> updateProductAvailability(
       {required int productId, required bool isAvailable});
   Future<ProductModel> createProduct(ProductModel product);
-  
-  // *** متد جدید ***
   Future<ProductModel> updateProduct(ProductModel product);
 }
 
@@ -22,13 +20,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<List<ProductCategoryModel>> getCategories(int storeId) async {
-    // ... (کد بدون تغییر) ...
     try {
       final response = await supabaseClient
           .from('product_categories')
           .select()
           .eq('store_id', storeId)
-          .order('sort_order', ascending: true); 
+          .order('sort_order', ascending: true);
 
       return response
           .map((json) => ProductCategoryModel.fromJson(json))
@@ -40,11 +37,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<List<ProductModel>> getProducts(int storeId) async {
-    // ... (کد بدون تغییر) ...
     try {
       final response = await supabaseClient
           .from('products')
-          .select('*, product_categories(name)') 
+          .select('*, product_categories(name)')
           .eq('store_id', storeId);
 
       return response.map((json) => ProductModel.fromJson(json)).toList();
@@ -56,7 +52,6 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<void> updateProductAvailability(
       {required int productId, required bool isAvailable}) async {
-    // ... (کد بدون تغییر) ...
     try {
       await supabaseClient
           .from('products')
@@ -71,16 +66,13 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<ProductModel> createProduct(ProductModel product) async {
-    // ... (کد بدون تغییر) ...
     try {
       final productMap = product.toJson()..remove('id');
-
       final response = await supabaseClient
           .from('products')
           .insert(productMap)
-          .select() 
+          .select()
           .single();
-
       return ProductModel.fromJson(response);
     } on PostgrestException catch (e) {
       throw ServerException(message: 'خطا در ایجاد محصول: ${e.message}');
@@ -89,20 +81,16 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     }
   }
 
-  // *** پیاده‌سازی متد جدید ***
   @override
   Future<ProductModel> updateProduct(ProductModel product) async {
     try {
-      // .toJson() مدل را به Map تبدیل می‌کند
       final productMap = product.toJson();
-
       final response = await supabaseClient
           .from('products')
           .update(productMap)
-          .eq('id', product.id) // آپدیت ردیفی که id آن مطابقت دارد
-          .select() // محصول آپدیت شده را برگردان
+          .eq('id', product.id)
+          .select()
           .single();
-
       return ProductModel.fromJson(response);
     } on PostgrestException catch (e) {
       throw ServerException(message: 'خطا در آپدیت محصول: ${e.message}');

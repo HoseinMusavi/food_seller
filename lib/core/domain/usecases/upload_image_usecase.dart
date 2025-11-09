@@ -2,18 +2,15 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
-import 'package:food_seller/core/data/datasources/storage_remote_datasource.dart';
 import 'package:food_seller/core/error/exceptions.dart';
 import 'package:food_seller/core/error/failure.dart';
 import 'package:food_seller/core/usecase/usecase.dart';
-// (ما باید یک ریپازیتوری هم بسازیم)
+import 'package:food_seller/core/data/datasources/storage_remote_datasource.dart'; // ایمپورت صحیح
 
-// ابتدا ریپازیتوری انتزاعی را تعریف می‌کنیم
 abstract class StorageRepository {
   Future<Either<Failure, String>> uploadFile(UploadFileParams params);
 }
 
-// سپس پیاده‌سازی آن
 class StorageRepositoryImpl implements StorageRepository {
   final StorageRemoteDataSource remoteDataSource;
   StorageRepositoryImpl({required this.remoteDataSource});
@@ -32,7 +29,6 @@ class StorageRepositoryImpl implements StorageRepository {
   }
 }
 
-// و در نهایت UseCase
 class UploadImageUseCase implements UseCase<String, UploadFileParams> {
   final StorageRepository repository;
   UploadImageUseCase(this.repository);

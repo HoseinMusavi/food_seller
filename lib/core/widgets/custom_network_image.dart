@@ -18,18 +18,15 @@ class CustomNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // استفاده از CachedNetworkImage برای عملکرد بهتر
     return CachedNetworkImage(
       imageUrl: imageUrl,
       width: width,
       height: height,
       fit: fit,
-      // پارامتر صحیح 'placeholder' است
       placeholder: (context, url) => Container(
         color: Colors.grey[200],
         child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
       ),
-      // پارامتر صحیح 'errorWidget' است
       errorWidget: (context, url, error) => Container(
         color: Colors.grey[200],
         child: Icon(

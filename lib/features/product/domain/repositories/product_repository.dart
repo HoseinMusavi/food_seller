@@ -10,7 +10,5 @@ abstract class ProductRepository {
   Future<Either<Failure, void>> updateProductAvailability(
       {required int productId, required bool isAvailable});
   Future<Either<Failure, ProductEntity>> createProduct(ProductEntity product);
-  
-  // *** متد جدید ***
   Future<Either<Failure, ProductEntity>> updateProduct(ProductEntity product);
 }

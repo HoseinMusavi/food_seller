@@ -13,7 +13,6 @@ class ProductRepositoryImpl implements ProductRepository {
 
   ProductRepositoryImpl({required this.remoteDataSource});
 
-  // ... (متدهای getCategories, getProducts, updateProductAvailability, createProduct بدون تغییر) ...
   @override
   Future<Either<Failure, List<ProductCategoryEntity>>> getCategories(
       int storeId) async {
@@ -63,15 +62,13 @@ class ProductRepositoryImpl implements ProductRepository {
         categoryId: product.categoryId,
         categoryName: product.categoryName,
       );
-
       final newProduct = await remoteDataSource.createProduct(productModel);
       return Right(newProduct);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     }
   }
-
-  // *** پیاده‌سازی متد جدید ***
+  
   @override
   Future<Either<Failure, ProductEntity>> updateProduct(
       ProductEntity product) async {

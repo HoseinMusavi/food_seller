@@ -5,13 +5,9 @@ import 'package:food_seller/core/di/service_locator.dart';
 import 'package:food_seller/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:food_seller/features/orders/presentation/cubit/order_management_cubit.dart';
 import 'package:food_seller/features/orders/presentation/pages/order_dashboard_page.dart';
-
-// *** ایمپورت‌های جدید برای فاز ۳ ***
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 import 'package:food_seller/features/product/presentation/pages/menu_management_page.dart';
 
-
-// --- صفحه موقت برای تب تنظیمات ---
 class SettingsPagePlaceholder extends StatelessWidget {
   const SettingsPagePlaceholder({super.key});
   @override
@@ -21,10 +17,9 @@ class SettingsPagePlaceholder extends StatelessWidget {
     );
   }
 }
-// --- پایان صفحه موقت ---
 
 class MainShell extends StatefulWidget {
-  final int storeId; // ID فروشگاه را از AuthWrapper دریافت می‌کنیم
+  final int storeId;
   const MainShell({super.key, required this.storeId});
 
   @override
@@ -40,12 +35,9 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _widgetOptions = <Widget>[
-      const OrderDashboardPage(), // تب ۰: سفارش‌ها
-      
-      // *** جایگزین شد: ***
-      const MenuManagementPage(), // تب ۱: منو
-      
-      const SettingsPagePlaceholder(), // تب ۲: تنظیمات
+      const OrderDashboardPage(),
+      const MenuManagementPage(),
+      const SettingsPagePlaceholder(),
     ];
   }
 
@@ -59,22 +51,18 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // AuthCubit برای دکمه خروج
         BlocProvider(
           create: (context) => sl<AuthCubit>(),
         ),
-        // Cubit سفارش‌ها (از فاز ۲)
         BlocProvider(
           create: (context) => sl<OrderManagementCubit>(
             param1: widget.storeId,
           )..loadOrders(),
         ),
-        
-        // *** Cubit جدید برای مدیریت منو ***
         BlocProvider(
           create: (context) => sl<MenuManagementCubit>(
             param1: widget.storeId,
-          )..loadMenu(), // ..loadMenu() را بلافاصله فراخوانی می‌کند
+          )..loadMenu(),
         ),
       ],
       child: Scaffold(
@@ -102,7 +90,7 @@ class _MainShellState extends State<MainShell> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Theme.of(context).colorScheme.primary, // سبز
+          selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Colors.grey[700],
           onTap: _onItemTapped,
         ),

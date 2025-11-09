@@ -3,22 +3,23 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_seller/core/di/service_locator.dart';
-import 'package:food_seller/core/widgets/custom_network_image.dart'; // *** ایمپورت ویجت عکس ***
+import 'package:food_seller/core/widgets/custom_network_image.dart';
 import 'package:food_seller/features/product/domain/entities/product_category_entity.dart';
+import 'package:food_seller/features/product/domain/entities/product_entity.dart';
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 import 'package:food_seller/features/product/presentation/cubit/product_editor_cubit.dart';
-import 'package:image_picker/image_picker.dart'; // *** ایمپورت ImageSource ***
+import 'package:image_picker/image_picker.dart';
 
 class ProductEditorPage extends StatelessWidget {
   final int storeId;
   final List<ProductCategoryEntity> categories;
-  // final ProductEntity? productToEdit;
+  final ProductEntity? productToEdit;
 
   const ProductEditorPage({
     super.key,
     required this.storeId,
     required this.categories,
-    // this.productToEdit,
+    this.productToEdit,
   });
 
   @override
@@ -28,6 +29,7 @@ class ProductEditorPage extends StatelessWidget {
       child: _ProductEditorView(
         storeId: storeId,
         categories: categories,
+        productToEdit: productToEdit,
       ),
     );
   }
@@ -36,10 +38,12 @@ class ProductEditorPage extends StatelessWidget {
 class _ProductEditorView extends StatefulWidget {
   final int storeId;
   final List<ProductCategoryEntity> categories;
+  final ProductEntity? productToEdit;
   
   const _ProductEditorView({
     required this.storeId,
     required this.categories,
+    this.productToEdit,
   });
 
   @override
@@ -55,6 +59,21 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
 
   File? _imageFile;
   String? _networkImageUrl;
+  
+  bool get _isEditing => widget.productToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      final product = widget.productToEdit!;
+      _nameController.text = product.name;
+      _descriptionController.text = product.description;
+      _priceController.text = product.price.toStringAsFixed(0);
+      _selectedCategoryId = product.categoryId;
+      _networkImageUrl = product.imageUrl;
+    }
+  }
 
   @override
   void dispose() {
@@ -68,17 +87,17 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
     if (!_formKey.currentState!.validate()) {
       return; 
     }
-    
-    context.read<ProductEditorCubit>().saveNewProduct(
+
+    context.read<ProductEditorCubit>().saveProduct(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
           price: double.tryParse(_priceController.text) ?? 0.0,
           categoryId: _selectedCategoryId,
           storeId: widget.storeId,
+          productToEdit: widget.productToEdit,
         );
   }
 
-  // *** متد جدید برای نمایش انتخاب منبع عکس ***
   void _showImageSourceSheet(BuildContext context) {
     final cubit = context.read<ProductEditorCubit>();
     showModalBottomSheet(
@@ -112,9 +131,11 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
 
   @override
   Widget build(BuildContext context) {
+    final title = _isEditing ? 'ویرایش محصول' : 'افزودن محصول جدید';
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('افزودن محصول جدید'),
+        title: Text(title),
       ),
       body: BlocConsumer<ProductEditorCubit, ProductEditorState>(
         listener: (context, state) {
@@ -132,7 +153,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                 backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             );
-            Navigator.pop(context, true); // true = رفرش کن
+            Navigator.pop(context, true); 
           }
           
           if (state is ProductEditorImageLoaded) {
@@ -154,9 +175,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   
-                  // *** بخش آپلود عکس (اصلاح شده) ***
                   GestureDetector(
-                    // *** onTap اصلاح شد ***
                     onTap: isFormLoading
                         ? null
                         : () => _showImageSourceSheet(context),
@@ -167,7 +186,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey[400]!),
                       ),
-                      clipBehavior: Clip.antiAlias, // برای گرد کردن گوشه‌های عکس
+                      clipBehavior: Clip.antiAlias, 
                       child: isImageLoading
                           ? Center(child: CircularProgressIndicator(
                               color: Theme.of(context).colorScheme.primary,
@@ -178,7 +197,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                                   fit: BoxFit.cover,
                                 )
                               : (_networkImageUrl != null
-                                  ? CustomNetworkImage( // استفاده از ویجت خودمان
+                                  ? CustomNetworkImage( 
                                       imageUrl: _networkImageUrl!,
                                       fit: BoxFit.cover,
                                     )
@@ -191,8 +210,8 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                                     ))),
                     ),
                   ),
-                  // ... (بقیه فرم بدون تغییر) ...
                   const SizedBox(height: 24),
+
                   TextFormField(
                     controller: _nameController,
                     readOnly: isFormLoading,
@@ -223,6 +242,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                     },
                   ),
                   const SizedBox(height: 16),
+
                   DropdownButtonFormField<int?>(
                     value: _selectedCategoryId,
                     hint: const Text('انتخاب دسته‌بندی (اختیاری)'),
@@ -250,6 +270,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                             });
                           },
                   ),
+                  
                   const SizedBox(height: 32),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(

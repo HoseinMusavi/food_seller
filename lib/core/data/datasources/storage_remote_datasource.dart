@@ -5,7 +5,6 @@ import 'package:mime/mime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class StorageRemoteDataSource {
-  /// فایل را در باکت مشخص شده آپلود می‌کند و URL عمومی آن را برمی‌گرداند
   Future<String> uploadFile({
     required File file,
     required String bucketName,
@@ -23,26 +22,22 @@ class StorageRemoteDataSourceImpl implements StorageRemoteDataSource {
     required String bucketName,
   }) async {
     try {
-      // ۱. یک نام فایل منحصر به فرد بر اساس زمان فعلی و پسوند فایل می‌سازیم
       final fileBytes = await file.readAsBytes();
       final fileExt = file.path.split('.').last;
       final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-      final filePath = fileName; // (در آینده می‌توان در پوشه‌های storeId ذخیره کرد)
+      final filePath = fileName; 
 
-      // ۲. نوع فایل (MIME type) را تشخیص می‌دهیم
       final mimeType = lookupMimeType(file.path);
 
-      // ۳. آپلود فایل در Supabase Storage
       await supabaseClient.storage.from(bucketName).uploadBinary(
             filePath,
             fileBytes,
             fileOptions: FileOptions(
               contentType: mimeType,
-              upsert: false, // اگر فایل وجود داشت، خطا بده
+              upsert: false, 
             ),
           );
 
-      // ۴. دریافت URL عمومی فایل آپلود شده
       final publicUrl = supabaseClient.storage
           .from(bucketName)
           .getPublicUrl(filePath);

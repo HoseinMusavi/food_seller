@@ -40,7 +40,7 @@ class MenuManagementPage extends StatelessWidget {
               return const Center(
                   child: Text('هنوز هیچ محصول یا دسته‌بندی ثبت نکرده‌اید.'));
             }
-            return _buildMenu(context, state, menuCubit); // *** ارسال Cubit ***
+            return _buildMenu(context, state, menuCubit);
           }
 
           if (state is MenuManagementError) {
@@ -71,7 +71,7 @@ class MenuManagementPage extends StatelessWidget {
             onPressed: () async {
               final result = await Navigator.pushNamed(
                 context,
-                '/add-product', // <-- رفتن به مسیر "افزودن"
+                '/add-product', 
                 arguments: {
                   'storeId': menuCubit.storeId,
                   'categories': state.categories,
@@ -92,7 +92,7 @@ class MenuManagementPage extends StatelessWidget {
   }
 
   Widget _buildMenu(BuildContext context, MenuManagementLoaded state,
-      MenuManagementCubit menuCubit) { // *** دریافت Cubit ***
+      MenuManagementCubit menuCubit) {
     final Map<int?, List<ProductEntity>> productsByCategory = {};
     for (var product in state.products) {
       productsByCategory.putIfAbsent(product.categoryId, () => []).add(product);
@@ -114,7 +114,7 @@ class MenuManagementPage extends StatelessWidget {
           } else {
             category = null;
             productsInThisCategory = productsByCategory[null] ?? [];
-            if (productsInThisCategory.isEmpty) {
+            if (productsInThisCategory.isEmpty && state.categories.isNotEmpty) {
               return const SizedBox.shrink();
             }
           }
@@ -158,24 +158,20 @@ class MenuManagementPage extends StatelessWidget {
                           isAvailable: isAvailable,
                         );
                       },
-                      // *** شروع بخش اصلاح شده (فعال‌سازی ویرایش) ***
                       onTap: () async {
                         final result = await Navigator.pushNamed(
                           context,
-                          '/edit-product', // <-- رفتن به مسیر "ویرایش"
+                          '/edit-product', 
                           arguments: {
-                            'product': product, // <-- ارسال خود محصول
+                            'product': product, 
                             'categories': state.categories,
                             'menuCubit': menuCubit,
                           },
                         );
-
-                        // اگر ویرایش موفق بود، لیست را رفرش کن
                         if (result == true && context.mounted) {
                           menuCubit.loadMenu();
                         }
                       },
-                      // *** پایان بخش اصلاح شده ***
                     );
                   },
                 ),

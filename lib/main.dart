@@ -2,15 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_seller/features/product/domain/entities/product_category_entity.dart';
+import 'package:food_seller/features/product/domain/entities/product_entity.dart';
 import 'package:food_seller/features/product/presentation/pages/product_editor_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // *** ایمپورت Bloc ***
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:food_seller/core/di/service_locator.dart' as di;
 import 'package:food_seller/core/theme/app_theme.dart';
 import 'package:food_seller/features/auth/presentation/pages/login_page.dart';
-import 'package:food_seller/auth_wrapper.dart'; 
-// *** ایمپورت Cubit ***
+import 'package:food_seller/auth_wrapper.dart';
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 
 void main() async {
@@ -43,12 +43,10 @@ class MyApp extends StatelessWidget {
       ],
       theme: AppTheme.lightTheme,
       home: const AuthGate(),
-      // *** فعال کردن onGenerateRoute ***
-      onGenerateRoute: _onGenerateRoute, 
+      onGenerateRoute: _onGenerateRoute,
     );
   }
 
-  // *** تابع مسیریابی جدید ***
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/add-product':
@@ -60,8 +58,6 @@ class MyApp extends StatelessWidget {
 
           if (storeId != null && categories != null && menuCubit != null) {
             return MaterialPageRoute(
-              // ما Cubit صفحه "منو" را به صفحه "ویرایشگر" می‌دهیم
-              // تا پس از ذخیره، بتوانیم آن را رفرش کنیم
               builder: (_) => BlocProvider.value(
                 value: menuCubit,
                 child: ProductEditorPage(
@@ -74,10 +70,27 @@ class MyApp extends StatelessWidget {
         }
         return _errorRoute();
 
-      // (در آینده)
-      // case '/edit-product':
-      //   ...
-      //   return MaterialPageRoute(...)
+      case '/edit-product':
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          final ProductEntity? product = args['product'];
+          final List<ProductCategoryEntity>? categories = args['categories'];
+          final MenuManagementCubit? menuCubit = args['menuCubit'];
+
+          if (product != null && categories != null && menuCubit != null) {
+            return MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: menuCubit,
+                child: ProductEditorPage(
+                  storeId: product.storeId,
+                  categories: categories,
+                  productToEdit: product,
+                ),
+              ),
+            );
+          }
+        }
+        return _errorRoute();
 
       default:
         return null;
@@ -94,7 +107,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// --- AuthGate (بدون تغییر) ---
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 

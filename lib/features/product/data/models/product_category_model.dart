@@ -1,8 +1,6 @@
 // lib/features/product/data/models/product_category_model.dart
 import 'package:food_seller/features/product/domain/entities/product_category_entity.dart';
 
-
-
 class ProductCategoryModel extends ProductCategoryEntity {
   const ProductCategoryModel({
     required super.id,

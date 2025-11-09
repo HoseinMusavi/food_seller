@@ -11,12 +11,11 @@ class OptionGroupModel extends OptionGroupEntity {
   });
 
   factory OptionGroupModel.fromJson(Map<String, dynamic> json) {
-    // گزینه‌های تودرتو (nested) را پارس می‌کند
     final optionsList = (json['options'] as List<dynamic>?)
             ?.map((optionJson) =>
                 OptionModel.fromJson(optionJson as Map<String, dynamic>))
             .toList() ??
-        []; // اگر لیستی وجود نداشت، لیست خالی برگردان
+        [];
 
     return OptionGroupModel(
       id: json['id'] as int,

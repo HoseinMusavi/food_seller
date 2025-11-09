@@ -7,16 +7,10 @@ abstract class ProductEditorState extends Equatable {
   List<Object?> get props => [];
 }
 
-// وضعیت اولیه، فرم آماده است
 class ProductEditorInitial extends ProductEditorState {}
-
-// در حال ذخیره (ایجاد یا ویرایش) محصول
 class ProductEditorSaving extends ProductEditorState {}
-
-// در حال واکشی اطلاعات یک محصول (برای حالت ویرایش)
 class ProductEditorLoading extends ProductEditorState {}
 
-// خطا در ذخیره یا واکشی
 class ProductEditorError extends ProductEditorState {
   final String message;
   const ProductEditorError(this.message);
@@ -24,7 +18,6 @@ class ProductEditorError extends ProductEditorState {
   List<Object?> get props => [message];
 }
 
-// محصول با موفقیت ذخیره شد
 class ProductEditorSaveSuccess extends ProductEditorState {
   final ProductEntity product;
   const ProductEditorSaveSuccess(this.product);
@@ -32,16 +25,11 @@ class ProductEditorSaveSuccess extends ProductEditorState {
   List<Object?> get props => [product];
 }
 
-
-// *** وضعیت‌های جدید برای آپلود عکس ***
-
-// در حال انتخاب یا آپلود عکس
 class ProductEditorImageLoading extends ProductEditorState {}
 
-// عکس با موفقیت انتخاب شد و آماده آپلود است (یا آپلود شده)
 class ProductEditorImageLoaded extends ProductEditorState {
-  final File? pickedFile; // فایل انتخاب شده از گالری
-  final String? uploadedImageUrl; // لینکی که از Storage می‌آید
+  final File? pickedFile;
+  final String? uploadedImageUrl;
   
   const ProductEditorImageLoaded({this.pickedFile, this.uploadedImageUrl});
   

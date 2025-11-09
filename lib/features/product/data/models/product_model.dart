@@ -16,7 +16,6 @@ class ProductModel extends ProductEntity {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    // پارس کردن نام دسته‌بندی از آبجکت JOIN شده
     String? catName;
     if (json['product_categories'] != null &&
         json['product_categories'] is Map) {
@@ -33,7 +32,7 @@ class ProductModel extends ProductEntity {
       imageUrl: json['image_url'] as String? ?? '',
       isAvailable: json['is_available'] as bool? ?? true,
       categoryId: json['category_id'] as int?,
-      categoryName: catName, // نام دسته‌بندی از JOIN
+      categoryName: catName,
     );
   }
 

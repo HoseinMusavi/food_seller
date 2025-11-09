@@ -5,7 +5,6 @@ import 'package:food_seller/core/usecase/usecase.dart';
 import 'package:food_seller/features/product/domain/entities/product_entity.dart';
 import 'package:food_seller/features/product/domain/repositories/product_repository.dart';
 
-// پارامتر ورودی، خود ProductEntity است
 class UpdateProductUseCase implements UseCase<ProductEntity, ProductEntity> {
   final ProductRepository repository;
 
@@ -13,7 +12,6 @@ class UpdateProductUseCase implements UseCase<ProductEntity, ProductEntity> {
 
   @override
   Future<Either<Failure, ProductEntity>> call(ProductEntity params) async {
-    // اعتبار سنجی
     if (params.name.isEmpty || params.price <= 0 || params.id == 0) {
       return Left(ServerFailure(message: 'اطلاعات محصول برای ویرایش ناقص است.'));
     }

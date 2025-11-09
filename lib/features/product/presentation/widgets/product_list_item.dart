@@ -1,16 +1,12 @@
 // lib/features/product/presentation/widgets/product_list_item.dart
 import 'package:flutter/material.dart';
-// *** ایمپورت جدید ویجت تصویر ***
-import 'package:food_seller/core/widgets/custom_network_image.dart'; 
+import 'package:food_seller/core/widgets/custom_network_image.dart';
 import 'package:food_seller/features/product/domain/entities/product_entity.dart';
 import 'package:intl/intl.dart';
 
-// --- ویجت CustomNetworkImage از این فایل حذف شد ---
-// (چون به فایل core/widgets منتقل شد)
-
 class ProductListItem extends StatelessWidget {
   final ProductEntity product;
-  final bool isToggling; // آیا این آیتم در حال آپدیت شدن است؟
+  final bool isToggling; 
   final ValueChanged<bool> onAvailabilityChanged;
   final VoidCallback onTap;
 
@@ -31,7 +27,6 @@ class ProductListItem extends StatelessWidget {
       decimalDigits: 0,
     );
 
-    // تغییر شفافیت ویجت اگر موجود نباشد
     return Opacity(
       opacity: product.isAvailable ? 1.0 : 0.6,
       child: Card(
@@ -48,10 +43,9 @@ class ProductListItem extends StatelessWidget {
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                // تصویر محصول
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
-                  child: CustomNetworkImage( // <-- اکنون از ویجت ایمپورت شده استفاده می‌کند
+                  child: CustomNetworkImage(
                     imageUrl: product.imageUrl,
                     width: 70,
                     height: 70,
@@ -59,7 +53,6 @@ class ProductListItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // نام و قیمت
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +78,6 @@ class ProductListItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // دکمه Switch (مهم‌ترین بخش)
                 if (isToggling)
                   const SizedBox(
                     width: 24,
@@ -96,12 +88,8 @@ class ProductListItem extends StatelessWidget {
                   Switch(
                     value: product.isAvailable,
                     onChanged: onAvailabilityChanged,
-                    // *** شروع بخش اصلاح شده ***
-                    // 'activeColor' با 'activeThumbColor' جایگزین شد
-                    activeThumbColor: theme.colorScheme.primary, 
-                    // (اختیاری) رنگ ترک (track) را هم برای زیبایی اضافه می‌کنیم
+                    activeThumbColor: theme.colorScheme.primary,
                     activeTrackColor: theme.colorScheme.primary.withAlpha(100),
-                    // *** پایان بخش اصلاح شده ***
                   ),
               ],
             ),

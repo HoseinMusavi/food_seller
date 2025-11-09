@@ -21,8 +21,6 @@ class MenuManagementError extends MenuManagementState {
 class MenuManagementLoaded extends MenuManagementState {
   final List<ProductCategoryEntity> categories;
   final List<ProductEntity> products;
-  // این Set آیدی محصولاتی را نگه می‌دارد که دکمه Switch آن‌ها
-  // در حال لودینگ (ارتباط با دیتابیس) است.
   final Set<int> togglingProductIds;
 
   const MenuManagementLoaded({
