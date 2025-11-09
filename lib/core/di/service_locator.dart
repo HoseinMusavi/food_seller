@@ -1,5 +1,4 @@
 // lib/core/di/service_locator.dart
-
 import 'package:food_seller/core/data/datasources/storage_remote_datasource.dart';
 import 'package:food_seller/core/domain/usecases/upload_image_usecase.dart';
 import 'package:food_seller/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -36,6 +35,11 @@ import 'package:food_seller/features/product/presentation/cubit/menu_management_
 import 'package:food_seller/features/product/presentation/cubit/product_editor_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+// *** ایمپورت‌های جدید برای مدیریت آپشن‌ها ***
+import 'package:food_seller/features/product/domain/usecases/get_store_option_groups_usecase.dart';
+import 'package:food_seller/features/product/domain/usecases/get_linked_option_groups_usecase.dart';
+import 'package:food_seller/features/product/domain/usecases/manage_product_options_usecase.dart';
 
 final sl = GetIt.instance;
 
@@ -109,7 +113,7 @@ Future<void> init() async {
     () => OrderRemoteDataSourceImpl(supabaseClient: sl()),
   );
 
-  // --- Product Management ---
+  // --- Product Management (کامل شده) ---
   sl.registerFactoryParam<MenuManagementCubit, int, void>(
     (storeId, _) => MenuManagementCubit(
       getProductsUseCase: sl(),
@@ -118,11 +122,28 @@ Future<void> init() async {
       storeId: storeId,
     ),
   );
+  
   sl.registerFactory(() => ProductEditorCubit(
         createProductUseCase: sl(),
         updateProductUseCase: sl(), 
         uploadImageUseCase: sl(),
+        // *** UseCases جدید آپشن‌ها ***
+        getStoreOptionGroupsUseCase: sl(),
+        getLinkedOptionGroupIdsUseCase: sl(),
+        createOptionGroupUseCase: sl(),
+        createOptionUseCase: sl(),
+        linkGroupToProductUseCase: sl(),
+        unlinkGroupFromProductUseCase: sl(),
       ));
+  
+  // *** UseCases جدید آپشن‌ها ***
+  sl.registerLazySingleton(() => GetStoreOptionGroupsUseCase(sl()));
+  sl.registerLazySingleton(() => GetLinkedOptionGroupIdsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateOptionGroupUseCase(sl()));
+  sl.registerLazySingleton(() => CreateOptionUseCase(sl()));
+  sl.registerLazySingleton(() => LinkGroupToProductUseCase(sl()));
+  sl.registerLazySingleton(() => UnlinkGroupFromProductUseCase(sl()));
+
   sl.registerLazySingleton(() => CreateProductUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProductUseCase(sl()));
   sl.registerLazySingleton(() => GetProductsUseCase(sl()));

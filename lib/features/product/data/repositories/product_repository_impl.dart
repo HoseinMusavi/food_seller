@@ -4,6 +4,7 @@ import 'package:food_seller/core/error/exceptions.dart';
 import 'package:food_seller/core/error/failure.dart';
 import 'package:food_seller/features/product/data/datasources/product_remote_datasource.dart';
 import 'package:food_seller/features/product/data/models/product_model.dart';
+import 'package:food_seller/features/product/domain/entities/option_group_entity.dart'; // *** ایمپورت جدید ***
 import 'package:food_seller/features/product/domain/entities/product_category_entity.dart';
 import 'package:food_seller/features/product/domain/entities/product_entity.dart';
 import 'package:food_seller/features/product/domain/repositories/product_repository.dart';
@@ -13,6 +14,7 @@ class ProductRepositoryImpl implements ProductRepository {
 
   ProductRepositoryImpl({required this.remoteDataSource});
 
+  // ... (متدهای getCategories, getProducts, updateProductAvailability, createProduct, updateProduct بدون تغییر) ...
   @override
   Future<Either<Failure, List<ProductCategoryEntity>>> getCategories(
       int storeId) async {
@@ -23,7 +25,6 @@ class ProductRepositoryImpl implements ProductRepository {
       return Left(ServerFailure(message: e.message));
     }
   }
-
   @override
   Future<Either<Failure, List<ProductEntity>>> getProducts(int storeId) async {
     try {
@@ -33,7 +34,6 @@ class ProductRepositoryImpl implements ProductRepository {
       return Left(ServerFailure(message: e.message));
     }
   }
-
   @override
   Future<Either<Failure, void>> updateProductAvailability(
       {required int productId, required bool isAvailable}) async {
@@ -45,7 +45,6 @@ class ProductRepositoryImpl implements ProductRepository {
       return Left(ServerFailure(message: e.message));
     }
   }
-
   @override
   Future<Either<Failure, ProductEntity>> createProduct(
       ProductEntity product) async {
@@ -68,7 +67,6 @@ class ProductRepositoryImpl implements ProductRepository {
       return Left(ServerFailure(message: e.message));
     }
   }
-  
   @override
   Future<Either<Failure, ProductEntity>> updateProduct(
       ProductEntity product) async {
@@ -87,6 +85,67 @@ class ProductRepositoryImpl implements ProductRepository {
       );
       final updatedProduct = await remoteDataSource.updateProduct(productModel);
       return Right(updatedProduct);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  // *** پیاده‌سازی متدهای جدید آپشن ***
+  @override
+  Future<Either<Failure, List<OptionGroupEntity>>> getStoreOptionGroups(int storeId) async {
+     try {
+      final models = await remoteDataSource.getStoreOptionGroups(storeId);
+      return Right(models);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Set<int>>> getLinkedOptionGroupIds(int productId) async {
+    try {
+      final ids = await remoteDataSource.getLinkedOptionGroupIds(productId);
+      return Right(ids);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, OptionGroupEntity>> createOptionGroup({required int storeId, required String name}) async {
+     try {
+      final model = await remoteDataSource.createOptionGroup(storeId: storeId, name: name);
+      return Right(model);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> createOption({required int optionGroupId, required String name, required double priceDelta}) async {
+    try {
+      await remoteDataSource.createOption(optionGroupId: optionGroupId, name: name, priceDelta: priceDelta);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> linkOptionGroupToProduct({required int productId, required int optionGroupId}) async {
+     try {
+      await remoteDataSource.linkOptionGroupToProduct(productId: productId, optionGroupId: optionGroupId);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> unlinkOptionGroupFromProduct({required int productId, required int optionGroupId}) async {
+     try {
+      await remoteDataSource.unlinkOptionGroupFromProduct(productId: productId, optionGroupId: optionGroupId);
+      return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     }

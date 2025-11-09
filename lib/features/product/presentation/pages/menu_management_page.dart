@@ -9,8 +9,26 @@ import 'package:food_seller/features/product/presentation/widgets/product_list_i
 class MenuManagementPage extends StatelessWidget {
   const MenuManagementPage({super.key});
 
+  // (جدید) - تابع کمکی برای ناوبری (جلوگیری از تکرار کد)
+  void _navigateToAddProduct(BuildContext context, MenuManagementCubit menuCubit, MenuManagementLoaded state) async {
+      final result = await Navigator.pushNamed(
+        context,
+        '/add-product', 
+        arguments: {
+          'storeId': menuCubit.storeId, 
+          'categories': state.categories,
+          'menuCubit': menuCubit,
+        },
+      );
+      
+      if (result == true && context.mounted) {
+        context.read<MenuManagementCubit>().loadMenu();
+      }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Cubit را از MainShell دریافت می‌کنیم
     final menuCubit = context.read<MenuManagementCubit>();
 
     return Scaffold(
@@ -37,8 +55,23 @@ class MenuManagementPage extends StatelessWidget {
 
           if (state is MenuManagementLoaded) {
             if (state.products.isEmpty && state.categories.isEmpty) {
-              return const Center(
-                  child: Text('هنوز هیچ محصول یا دسته‌بندی ثبت نکرده‌اید.'));
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.menu_book_outlined, size: 60, color: Colors.grey[300]),
+                    const SizedBox(height: 16),
+                    const Text('هنوز هیچ محصول یا دسته‌بندی ثبت نکرده‌اید.'),
+                    const SizedBox(height: 20),
+                    // دکمه افزودن در مرکز صفحه، زمانی که لیست خالی است
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('افزودن اولین محصول'),
+                      onPressed: () => _navigateToAddProduct(context, menuCubit, state),
+                    )
+                  ],
+                ),
+              );
             }
             return _buildMenu(context, state, menuCubit);
           }
@@ -61,38 +94,32 @@ class MenuManagementPage extends StatelessWidget {
           return const Center(child: Text('وضعیت نامشخص'));
         },
       ),
+
+      // *** شروع بخش اصلاح شده ***
+      // موقعیت دکمه شناور را به startFloat تغییر دادیم
+      // که در حالت RTL (فارسی) به معنای "سمت راست" است.
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: BlocBuilder<MenuManagementCubit, MenuManagementState>(
         builder: (context, state) {
-          if (state is! MenuManagementLoaded) {
-            return const SizedBox.shrink();
+          // اگر لیست خالی باشد، دکمه را نشان نده (چون دکمه وسط صفحه هست)
+          if (state is! MenuManagementLoaded || (state.products.isEmpty && state.categories.isEmpty)) {
+            return const SizedBox.shrink(); 
           }
           
           return FloatingActionButton(
-            onPressed: () async {
-              final result = await Navigator.pushNamed(
-                context,
-                '/add-product', 
-                arguments: {
-                  'storeId': menuCubit.storeId,
-                  'categories': state.categories,
-                  'menuCubit': menuCubit,
-                },
-              );
-              
-              if (result == true && context.mounted) {
-                context.read<MenuManagementCubit>().loadMenu();
-              }
-            },
+            onPressed: () => _navigateToAddProduct(context, menuCubit, state),
             backgroundColor: Theme.of(context).colorScheme.primary,
             child: const Icon(Icons.add, color: Colors.white),
           );
         },
       ),
+      // *** پایان بخش اصلاح شده ***
     );
   }
 
+
   Widget _buildMenu(BuildContext context, MenuManagementLoaded state,
-      MenuManagementCubit menuCubit) {
+      MenuManagementCubit menuCubit) { 
     final Map<int?, List<ProductEntity>> productsByCategory = {};
     for (var product in state.products) {
       productsByCategory.putIfAbsent(product.categoryId, () => []).add(product);
@@ -119,6 +146,11 @@ class MenuManagementPage extends StatelessWidget {
             }
           }
 
+          // اگر دسته‌بندی محصولی نداشت، آن را اصلاً نشان نده (به جز بار اول)
+          if(productsInThisCategory.isEmpty && category != null) {
+            return const SizedBox.shrink();
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -135,11 +167,12 @@ class MenuManagementPage extends StatelessWidget {
                 ),
               ),
               if (productsInThisCategory.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    'محصولی در این دسته‌بندی وجود ندارد.',
-                    style: TextStyle(color: Colors.grey),
+                    // اگر دسته "سایر" بود و محصولی نداشت
+                    category == null ? 'محصولی بدون دسته‌بندی یافت نشد.' : 'محصولی در این دسته‌بندی وجود ندارد.',
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 )
               else

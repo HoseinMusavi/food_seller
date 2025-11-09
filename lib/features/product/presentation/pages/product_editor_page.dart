@@ -1,19 +1,25 @@
 // lib/features/product/presentation/pages/product_editor_page.dart
-import 'dart:io';
+import 'dart:io'; 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // برای inputFormatters
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_seller/core/di/service_locator.dart';
-import 'package:food_seller/core/widgets/custom_network_image.dart';
+import 'package:food_seller/core/widgets/custom_network_image.dart'; 
 import 'package:food_seller/features/product/domain/entities/product_category_entity.dart';
-import 'package:food_seller/features/product/domain/entities/product_entity.dart';
+import 'package:food_seller/features/product/domain/entities/product_entity.dart'; 
+import 'package:food_seller/features/product/domain/entities/option_group_entity.dart'; // *** ایمپورت جدید ***
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 import 'package:food_seller/features/product/presentation/cubit/product_editor_cubit.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:food_seller/features/product/presentation/pages/widgets/manage_options_dialog.dart';
+import 'package:image_picker/image_picker.dart'; 
+// *** ایمپورت دیالوگ‌های جدید ***
+import 'package:food_seller/features/product/presentation/widgets/add_option_group_dialog.dart';
+
 
 class ProductEditorPage extends StatelessWidget {
   final int storeId;
   final List<ProductCategoryEntity> categories;
-  final ProductEntity? productToEdit;
+  final ProductEntity? productToEdit; 
 
   const ProductEditorPage({
     super.key,
@@ -25,7 +31,11 @@ class ProductEditorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<ProductEditorCubit>(),
+      create: (context) => sl<ProductEditorCubit>()
+        ..loadOptions( // *** به محض ساخت، آپشن‌ها را لود کن ***
+          storeId: storeId,
+          productId: productToEdit?.id,
+        ),
       child: _ProductEditorView(
         storeId: storeId,
         categories: categories,
@@ -83,7 +93,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
     super.dispose();
   }
 
-  void _onSavePressed() {
+  void _onSavePressed(BuildContext context) {
     if (!_formKey.currentState!.validate()) {
       return; 
     }
@@ -129,6 +139,35 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
     );
   }
 
+  // *** متد جدید: نمایش دیالوگ افزودن گروه آپشن ***
+  void _onAddOptionGroup(BuildContext context, ProductEditorCubit cubit) async {
+    final String? newGroupName = await showDialog<String>(
+      context: context,
+      builder: (_) => const AddOptionGroupDialog(),
+    );
+
+    if (newGroupName != null && newGroupName.isNotEmpty && context.mounted) {
+      cubit.createOptionGroup(name: newGroupName);
+    }
+  }
+
+  // *** متد جدید: نمایش دیالوگ مدیریت گزینه‌های یک گروه ***
+  void _onManageOptions(BuildContext context, ProductEditorCubit cubit, OptionGroupEntity group) async {
+    final NewOptionResult? newOption = await showDialog<NewOptionResult>(
+      context: context,
+      builder: (_) => ManageOptionsDialog(group: group),
+    );
+
+    if (newOption != null && context.mounted) {
+      cubit.createOption(
+        optionGroupId: group.id,
+        name: newOption.name,
+        priceDelta: newOption.priceDelta,
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final title = _isEditing ? 'ویرایش محصول' : 'افزودن محصول جدید';
@@ -153,9 +192,10 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                 backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             );
-            Navigator.pop(context, true); 
+            Navigator.pop(context, true); // true = رفرش کن
           }
           
+          // *** لیسنر آپدیت شده برای عکس ***
           if (state is ProductEditorImageLoaded) {
             setState(() {
               _imageFile = state.pickedFile;
@@ -164,8 +204,24 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
           }
         },
         builder: (context, state) {
-          final isFormLoading = state is ProductEditorSaving || state is ProductEditorLoading;
-          final isImageLoading = state is ProductEditorImageLoading;
+          final isFormLoading = state is ProductEditorSaving;
+          final isPageLoading = state is ProductEditorLoading;
+          
+          // وضعیت‌های لودینگ عکس و آپشن‌ها را از state اصلی می‌گیریم
+          bool isImageLoading = false;
+          bool isOptionsBusy = false;
+          if (state is ProductEditorDataLoaded) {
+            isImageLoading = state.isImageLoading;
+            isOptionsBusy = state.isOptionsBusy;
+            // اگر فایلی انتخاب شده بود، آن را ست کن
+            if (state.pickedFile != null) {
+              _imageFile = state.pickedFile;
+            }
+          }
+
+          if (isPageLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -176,7 +232,7 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                 children: [
                   
                   GestureDetector(
-                    onTap: isFormLoading
+                    onTap: isFormLoading || isImageLoading
                         ? null
                         : () => _showImageSourceSheet(context),
                     child: Container(
@@ -271,21 +327,124 @@ class _ProductEditorViewState extends State<_ProductEditorView> {
                           },
                   ),
                   
+                  // *** شروع بخش جدید (مدیریت آپشن‌ها) ***
+                  const SizedBox(height: 24),
+                  _buildOptionsSection(context, state, isFormLoading || isOptionsBusy),
+                  // *** پایان بخش جدید ***
+
                   const SizedBox(height: 32),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    onPressed: isFormLoading ? null : _onSavePressed,
+                    onPressed: isFormLoading || isOptionsBusy ? null : () => _onSavePressed(context),
                     child: isFormLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('ذخیره محصول'),
+                        : Text(_isEditing ? 'ذخیره تغییرات' : 'ذخیره محصول جدید'),
                   ),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  // *** ویجت کاملاً جدید برای نمایش و مدیریت آپشن‌ها ***
+  Widget _buildOptionsSection(BuildContext context, ProductEditorState state, bool isBusy) {
+    
+    // این بخش فقط زمانی نمایش داده می‌شود که آپشن‌ها با موفقیت لود شده باشند
+    if (state is! ProductEditorDataLoaded) {
+      return const Center(child: Text('در حال بارگذاری آپشن‌ها...'));
+    }
+
+    final theme = Theme.of(context);
+    final cubit = context.read<ProductEditorCubit>();
+    final allGroups = state.allOptionGroups;
+    final linkedIds = state.linkedGroupIds;
+
+    return Card(
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'مدیریت آپشن‌ها',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                // *** دکمه افزودن گروه (فعال شد) ***
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
+                  tooltip: 'افزودن گروه آپشن جدید',
+                  onPressed: isBusy 
+                    ? null 
+                    : () => _onAddOptionGroup(context, cubit),
+                )
+              ],
+            ),
+            const Divider(height: 20),
+            
+            if (state.isOptionsBusy)
+              const Center(child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              )),
+
+            if (allGroups.isEmpty && !state.isOptionsBusy)
+              const Center(child: Text('هیچ گروه آپشنی برای این فروشگاه نساخته‌اید.')),
+            
+            // لیست تمام گروه‌های آپشن فروشگاه
+            ...allGroups.map((group) {
+              final isLinked = linkedIds.contains(group.id);
+              return CheckboxListTile(
+                title: Text(group.name),
+                subtitle: Text('${group.options.length} گزینه (مثال: ${group.options.firstOrNull?.name ?? 'خالی'})'),
+                value: isLinked,
+                // فقط در حالت "ویرایش" اجازه لینک کردن می‌دهیم
+                onChanged: (widget.productToEdit == null || isBusy)
+                  ? null // در حالت "ایجاد" غیرفعال کن
+                  : (bool? shouldLink) {
+                      if (shouldLink == null) return;
+                      cubit.toggleOptionLink(
+                            productId: widget.productToEdit!.id,
+                            groupId: group.id,
+                            shouldLink: shouldLink,
+                          );
+                    },
+                controlAffinity: ListTileControlAffinity.leading,
+                // *** دکمه ویرایش گزینه‌ها (فعال شد) ***
+                secondary: IconButton(
+                  icon: Icon(Icons.edit_outlined, color: theme.colorScheme.outline),
+                  tooltip: 'ویرایش گزینه‌های ${group.name}',
+                  onPressed: isBusy 
+                    ? null
+                    : () => _onManageOptions(context, cubit, group),
+                ),
+              );
+            }).toList(),
+            
+            if (widget.productToEdit == null) // اگر در حالت "ایجاد" هستیم
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'ابتدا محصول را ذخیره کنید تا بتوانید آپشن‌ها را به آن متصل کنید.',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
