@@ -21,12 +21,14 @@ class StoreModel extends StoreEntity {
     LatLng? parseLocation(dynamic loc) {
       if (loc == null) return null;
       try {
+        // Supabase PostGIS Point را به صورت 'POINT(long lat)' برمیگرداند
         if (loc is String && loc.contains('POINT')) {
           final parts = loc.split('(')[1].split(')')[0].split(' ');
           final lon = double.parse(parts[0]);
           final lat = double.parse(parts[1]);
           return LatLng(latitude: lat, longitude: lon);
         }
+        // یا به صورت GeoJSON
         if (loc is Map<String, dynamic> && loc['coordinates'] != null) {
            final coordinates = loc['coordinates'] as List;
            return LatLng(
@@ -48,11 +50,39 @@ class StoreModel extends StoreEntity {
       logoUrl: json['logo_url'] as String? ?? '',
       isOpen: json['is_open'] as bool? ?? true,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      ratingCount: json['rating_count'] as int? ?? 0,
+      ratingCount: (json['rating_count'] as int? ?? 0),
       cuisineType: json['cuisine_type'] as String? ?? 'متفرقه',
       deliveryTimeEstimate:
           json['delivery_time_estimate'] as String? ?? 'نامشخص',
       location: parseLocation(json['location']),
     );
   }
+
+  // *** شروع بخش جدید (متد copyWith) ***
+  StoreModel copyWith({
+    int? id,
+    String? name,
+    String? address,
+    String? logoUrl,
+    bool? isOpen,
+    double? rating,
+    int? ratingCount,
+    String? cuisineType,
+    String? deliveryTimeEstimate,
+    LatLng? location,
+  }) {
+    return StoreModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      address: address ?? this.address,
+      logoUrl: logoUrl ?? this.logoUrl,
+      isOpen: isOpen ?? this.isOpen,
+      rating: rating ?? this.rating,
+      ratingCount: ratingCount ?? this.ratingCount,
+      cuisineType: cuisineType ?? this.cuisineType,
+      deliveryTimeEstimate: deliveryTimeEstimate ?? this.deliveryTimeEstimate,
+      location: location ?? this.location,
+    );
+  }
+  // *** پایان بخش جدید ***
 }

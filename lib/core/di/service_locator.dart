@@ -28,18 +28,26 @@ import 'package:food_seller/features/product/data/repositories/product_repositor
 import 'package:food_seller/features/product/domain/repositories/product_repository.dart';
 import 'package:food_seller/features/product/domain/usecases/create_product_usecase.dart';
 import 'package:food_seller/features/product/domain/usecases/get_categories_usecase.dart';
+import 'package:food_seller/features/product/domain/usecases/get_linked_option_groups_usecase.dart';
 import 'package:food_seller/features/product/domain/usecases/get_products_usecase.dart';
+import 'package:food_seller/features/product/domain/usecases/get_store_option_groups_usecase.dart';
+import 'package:food_seller/features/product/domain/usecases/manage_product_options_usecase.dart';
 import 'package:food_seller/features/product/domain/usecases/update_product_availability_usecase.dart';
 import 'package:food_seller/features/product/domain/usecases/update_product_usecase.dart';
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 import 'package:food_seller/features/product/presentation/cubit/product_editor_cubit.dart';
+// *** ایمپورت‌های جدید Settings ***
+import 'package:food_seller/features/settings/data/datasources/settings_remote_datasource.dart';
+import 'package:food_seller/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:food_seller/features/settings/domain/repositories/settings_repository.dart';
+import 'package:food_seller/features/settings/domain/usecases/get_store_details_usecase.dart';
+import 'package:food_seller/features/settings/domain/usecases/get_store_reviews_usecase.dart';
+import 'package:food_seller/features/settings/domain/usecases/update_store_status_usecase.dart';
+import 'package:food_seller/features/settings/presentation/cubit/reviews_cubit.dart';
+import 'package:food_seller/features/settings/presentation/cubit/settings_cubit.dart';
+// ***
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-// *** ایمپورت‌های جدید برای مدیریت آپشن‌ها ***
-import 'package:food_seller/features/product/domain/usecases/get_store_option_groups_usecase.dart';
-import 'package:food_seller/features/product/domain/usecases/get_linked_option_groups_usecase.dart';
-import 'package:food_seller/features/product/domain/usecases/manage_product_options_usecase.dart';
 
 final sl = GetIt.instance;
 
@@ -113,7 +121,7 @@ Future<void> init() async {
     () => OrderRemoteDataSourceImpl(supabaseClient: sl()),
   );
 
-  // --- Product Management (کامل شده) ---
+  // --- Product Management ---
   sl.registerFactoryParam<MenuManagementCubit, int, void>(
     (storeId, _) => MenuManagementCubit(
       getProductsUseCase: sl(),
@@ -122,12 +130,10 @@ Future<void> init() async {
       storeId: storeId,
     ),
   );
-  
   sl.registerFactory(() => ProductEditorCubit(
         createProductUseCase: sl(),
-        updateProductUseCase: sl(), 
+        updateProductUseCase: sl(),
         uploadImageUseCase: sl(),
-        // *** UseCases جدید آپشن‌ها ***
         getStoreOptionGroupsUseCase: sl(),
         getLinkedOptionGroupIdsUseCase: sl(),
         createOptionGroupUseCase: sl(),
@@ -135,15 +141,12 @@ Future<void> init() async {
         linkGroupToProductUseCase: sl(),
         unlinkGroupFromProductUseCase: sl(),
       ));
-  
-  // *** UseCases جدید آپشن‌ها ***
   sl.registerLazySingleton(() => GetStoreOptionGroupsUseCase(sl()));
   sl.registerLazySingleton(() => GetLinkedOptionGroupIdsUseCase(sl()));
   sl.registerLazySingleton(() => CreateOptionGroupUseCase(sl()));
   sl.registerLazySingleton(() => CreateOptionUseCase(sl()));
   sl.registerLazySingleton(() => LinkGroupToProductUseCase(sl()));
   sl.registerLazySingleton(() => UnlinkGroupFromProductUseCase(sl()));
-
   sl.registerLazySingleton(() => CreateProductUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProductUseCase(sl()));
   sl.registerLazySingleton(() => GetProductsUseCase(sl()));
@@ -155,6 +158,34 @@ Future<void> init() async {
   sl.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSourceImpl(supabaseClient: sl()),
   );
+
+  // *** شروع بخش جدید Settings ***
+  sl.registerFactoryParam<SettingsCubit, int, void>(
+    (storeId, _) => SettingsCubit(
+      getStoreDetailsUseCase: sl(),
+      updateStoreStatusUseCase: sl(),
+      storeId: storeId,
+    ),
+  );
+  sl.registerFactoryParam<ReviewsCubit, int, void>(
+    (storeId, _) => ReviewsCubit(
+      getStoreReviewsUseCase: sl(),
+      storeId: storeId,
+    ),
+  );
+  // UseCases
+  sl.registerLazySingleton(() => GetStoreDetailsUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateStoreStatusUseCase(sl()));
+  sl.registerLazySingleton(() => GetStoreReviewsUseCase(sl()));
+  // Repository
+  sl.registerLazySingleton<SettingsRepository>(
+    () => SettingsRepositoryImpl(remoteDataSource: sl()),
+  );
+  // DataSource
+  sl.registerLazySingleton<SettingsRemoteDataSource>(
+    () => SettingsRemoteDataSourceImpl(supabaseClient: sl()),
+  );
+  // *** پایان بخش جدید Settings ***
 
   // #endregion
 }

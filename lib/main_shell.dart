@@ -7,19 +7,13 @@ import 'package:food_seller/features/orders/presentation/cubit/order_management_
 import 'package:food_seller/features/orders/presentation/pages/order_dashboard_page.dart';
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 import 'package:food_seller/features/product/presentation/pages/menu_management_page.dart';
+// *** ایمپورت‌های جدید Settings ***
+import 'package:food_seller/features/settings/presentation/cubit/settings_cubit.dart';
+import 'package:food_seller/features/settings/presentation/pages/settings_page.dart';
 
-class SettingsPagePlaceholder extends StatelessWidget {
-  const SettingsPagePlaceholder({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("صفحه تنظیمات\n(طراحی صفحه ۳)")),
-    );
-  }
-}
 
 class MainShell extends StatefulWidget {
-  final int storeId;
+  final int storeId; // ID فروشگاه را از AuthWrapper دریافت می‌کنیم
   const MainShell({super.key, required this.storeId});
 
   @override
@@ -27,7 +21,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 0; // شروع از تب سفارش‌ها
 
   late final List<Widget> _widgetOptions;
 
@@ -35,9 +29,11 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _widgetOptions = <Widget>[
-      const OrderDashboardPage(),
-      const MenuManagementPage(),
-      const SettingsPagePlaceholder(),
+      const OrderDashboardPage(), // تب ۰: سفارش‌ها
+      const MenuManagementPage(), // تب ۱: منو
+      
+      // *** جایگزین شد: ***
+      const SettingsPage(),       // تب ۲: تنظیمات
     ];
   }
 
@@ -51,18 +47,28 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        // AuthCubit (برای دکمه خروج)
         BlocProvider(
           create: (context) => sl<AuthCubit>(),
         ),
+        // Cubit سفارش‌ها (از فاز ۲)
         BlocProvider(
           create: (context) => sl<OrderManagementCubit>(
             param1: widget.storeId,
           )..loadOrders(),
         ),
+        // Cubit منو (از فاز ۳)
         BlocProvider(
           create: (context) => sl<MenuManagementCubit>(
             param1: widget.storeId,
           )..loadMenu(),
+        ),
+        
+        // *** Cubit جدید برای تنظیمات ***
+        BlocProvider(
+          create: (context) => sl<SettingsCubit>(
+            param1: widget.storeId,
+          )..loadStoreDetails(), // ..loadStoreDetails() را بلافاصله فراخوانی می‌کند
         ),
       ],
       child: Scaffold(
@@ -90,7 +96,7 @@ class _MainShellState extends State<MainShell> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
+          selectedItemColor: Theme.of(context).colorScheme.primary, // سبز
           unselectedItemColor: Colors.grey[700],
           onTap: _onItemTapped,
         ),
