@@ -1,6 +1,6 @@
 // lib/features/settings/data/datasources/settings_remote_datasource.dart
 import 'package:food_seller/core/error/exceptions.dart';
-import 'package:food_seller/features/orders/data/models/store_model.dart'; // <-- از مدل Store در فیچر Orders استفاده مجدد می‌کنیم
+import 'package:food_seller/features/orders/data/models/store_model.dart';
 import 'package:food_seller/features/settings/data/models/store_review_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,9 +10,20 @@ abstract class SettingsRemoteDataSource {
 
   /// وضعیت باز/بسته بودن فروشگاه را آپدیت می‌کند
   Future<void> updateStoreStatus({required int storeId, required bool isOpen});
-  
+
   /// نظرات مشتریان را با RPC واکشی می‌کند
   Future<List<StoreReviewModel>> getStoreReviews(int storeId);
+
+  // --- شروع بخش جدید ---
+
+  /// نام فروشگاه را آپدیت می‌کند
+  Future<void> updateStoreName({required int storeId, required String newName});
+
+  /// URL لوگوی فروشگاه را آپدیت می‌کند
+  Future<void> updateStoreLogoUrl(
+      {required int storeId, required String newLogoUrl});
+  
+  // --- پایان بخش جدید ---
 }
 
 class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
@@ -36,7 +47,8 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
   }
 
   @override
-  Future<void> updateStoreStatus({required int storeId, required bool isOpen}) async {
+  Future<void> updateStoreStatus(
+      {required int storeId, required bool isOpen}) async {
     try {
       await supabaseClient
           .from('stores')
@@ -49,7 +61,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
       throw ServerException(message: e.toString());
     }
   }
-  
+
   @override
   Future<List<StoreReviewModel>> getStoreReviews(int storeId) async {
     try {
@@ -58,7 +70,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         'get_store_reviews_with_customer',
         params: {'p_store_id': storeId},
       );
-      
+
       return (response as List)
           .map((json) => StoreReviewModel.fromJson(json))
           .toList();
@@ -68,4 +80,37 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
       throw ServerException(message: e.toString());
     }
   }
+
+  // --- شروع بخش جدید ---
+
+  @override
+  Future<void> updateStoreName(
+      {required int storeId, required String newName}) async {
+    try {
+      await supabaseClient
+          .from('stores')
+          .update({'name': newName})
+          .eq('id', storeId);
+    } on PostgrestException catch (e) {
+      throw ServerException(message: e.message);
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<void> updateStoreLogoUrl(
+      {required int storeId, required String newLogoUrl}) async {
+    try {
+      await supabaseClient
+          .from('stores')
+          .update({'logo_url': newLogoUrl})
+          .eq('id', storeId);
+    } on PostgrestException catch (e) {
+      throw ServerException(message: e.message);
+    } catch (e) {
+      throw ServerException(message: e.toString());
+    }
+  }
+  // --- پایان بخش جدید ---
 }

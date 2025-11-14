@@ -9,21 +9,37 @@ import 'package:food_seller/features/settings/domain/repositories/settings_repos
 
 class SettingsRepositoryImpl implements SettingsRepository {
   final SettingsRemoteDataSource remoteDataSource;
+
   SettingsRepositoryImpl({required this.remoteDataSource});
 
   @override
   Future<Either<Failure, StoreEntity>> getStoreDetails(int storeId) async {
     try {
+      // --- اصلاح شد: استفاده از پارامتر نام‌دار ---
       final storeModel = await remoteDataSource.getStoreDetails(storeId);
       return Right(storeModel);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     }
   }
-  
+
   @override
-  Future<Either<Failure, List<StoreReviewEntity>>> getStoreReviews(int storeId) async {
-     try {
+  Future<Either<Failure, void>> updateStoreStatus(
+      {required int storeId, required bool isOpen}) async {
+    try {
+      // --- اصلاح شد: استفاده از پارامتر نام‌دار ---
+      await remoteDataSource.updateStoreStatus(storeId: storeId, isOpen: isOpen);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<StoreReviewEntity>>> getStoreReviews(
+      int storeId) async {
+    try {
+      // --- اصلاح شد: استفاده از پارامتر نام‌دار ---
       final reviewModels = await remoteDataSource.getStoreReviews(storeId);
       return Right(reviewModels);
     } on ServerException catch (e) {
@@ -31,13 +47,31 @@ class SettingsRepositoryImpl implements SettingsRepository {
     }
   }
 
+  // --- شروع بخش جدید ---
+
   @override
-  Future<Either<Failure, void>> updateStoreStatus({required int storeId, required bool isOpen}) async {
-     try {
-      await remoteDataSource.updateStoreStatus(storeId: storeId, isOpen: isOpen);
+  Future<Either<Failure, void>> updateStoreName(
+      {required int storeId, required String newName}) async {
+    try {
+      // --- اصلاح شد: استفاده از پارامتر نام‌دار ---
+      await remoteDataSource.updateStoreName(storeId: storeId, newName: newName);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> updateStoreLogoUrl(
+      {required int storeId, required String newLogoUrl}) async {
+    try {
+      // --- اصلاح شد: استفاده از پارامتر نام‌دار ---
+      await remoteDataSource.updateStoreLogoUrl(
+          storeId: storeId, newLogoUrl: newLogoUrl);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+  // --- پایان بخش جدید ---
 }

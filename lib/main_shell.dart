@@ -7,10 +7,13 @@ import 'package:food_seller/features/orders/presentation/cubit/order_management_
 import 'package:food_seller/features/orders/presentation/pages/order_dashboard_page.dart';
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 import 'package:food_seller/features/product/presentation/pages/menu_management_page.dart';
-// *** ایمپورت‌های جدید Settings ***
 import 'package:food_seller/features/settings/presentation/cubit/settings_cubit.dart';
 import 'package:food_seller/features/settings/presentation/pages/settings_page.dart';
 
+// --- ایمپورت‌های جدید ---
+import 'package:food_seller/features/accounting/presentation/cubit/accounting_cubit.dart';
+import 'package:food_seller/features/accounting/presentation/pages/accounting_page.dart';
+// ---
 
 class MainShell extends StatefulWidget {
   final int storeId; // ID فروشگاه را از AuthWrapper دریافت می‌کنیم
@@ -31,9 +34,10 @@ class _MainShellState extends State<MainShell> {
     _widgetOptions = <Widget>[
       const OrderDashboardPage(), // تب ۰: سفارش‌ها
       const MenuManagementPage(), // تب ۱: منو
-      
-      // *** جایگزین شد: ***
-      const SettingsPage(),       // تب ۲: تنظیمات
+      // --- بخش جدید ---
+      const AccountingPage(), // تب ۲: حسابداری
+      // ---
+      const SettingsPage(), // تب ۳: تنظیمات
     ];
   }
 
@@ -51,31 +55,40 @@ class _MainShellState extends State<MainShell> {
         BlocProvider(
           create: (context) => sl<AuthCubit>(),
         ),
-        // Cubit سفارش‌ها (از فاز ۲)
+        // Cubit سفارش‌ها
         BlocProvider(
           create: (context) => sl<OrderManagementCubit>(
             param1: widget.storeId,
           )..loadOrders(),
         ),
-        // Cubit منو (از فاز ۳)
+        // Cubit منو
         BlocProvider(
           create: (context) => sl<MenuManagementCubit>(
             param1: widget.storeId,
           )..loadMenu(),
         ),
-        
-        // *** Cubit جدید برای تنظیمات ***
+
+        // Cubit تنظیمات
         BlocProvider(
           create: (context) => sl<SettingsCubit>(
             param1: widget.storeId,
-          )..loadStoreDetails(), // ..loadStoreDetails() را بلافاصله فراخوانی می‌کند
+          )..loadStoreDetails(),
         ),
+        
+        // --- Cubit جدید برای حسابداری ---
+        BlocProvider(
+          create: (context) => sl<AccountingCubit>(
+            param1: widget.storeId,
+          )..loadAccountingData(), // ..loadAccountingData() را فراخوانی می‌کند
+        ),
+        // ---
       ],
       child: Scaffold(
         body: IndexedStack(
           index: _selectedIndex,
           children: _widgetOptions,
         ),
+        // --- بخش اصلاح شده ---
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           items: const <BottomNavigationBarItem>[
@@ -89,6 +102,13 @@ class _MainShellState extends State<MainShell> {
               activeIcon: Icon(Icons.restaurant_menu),
               label: 'منو',
             ),
+            // --- تب جدید ---
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics_outlined),
+              activeIcon: Icon(Icons.analytics),
+              label: 'حسابداری',
+            ),
+            // ---
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined),
               activeIcon: Icon(Icons.settings),
@@ -96,10 +116,11 @@ class _MainShellState extends State<MainShell> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: Theme.of(context).colorScheme.primary, // سبز
+          selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Colors.grey[700],
           onTap: _onItemTapped,
         ),
+        // --- پایان بخش اصلاح شده ---
       ),
     );
   }

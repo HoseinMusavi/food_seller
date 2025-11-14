@@ -6,6 +6,14 @@ import 'package:food_seller/features/settings/domain/entities/store_review_entit
 
 abstract class SettingsRepository {
   Future<Either<Failure, StoreEntity>> getStoreDetails(int storeId);
-  Future<Either<Failure, void>> updateStoreStatus({required int storeId, required bool isOpen});
+  Future<Either<Failure, void>> updateStoreStatus(
+      {required int storeId, required bool isOpen});
   Future<Either<Failure, List<StoreReviewEntity>>> getStoreReviews(int storeId);
+
+  // --- شروع بخش جدید ---
+  Future<Either<Failure, void>> updateStoreName(
+      {required int storeId, required String newName});
+  Future<Either<Failure, void>> updateStoreLogoUrl(
+      {required int storeId, required String newLogoUrl});
+  // --- پایان بخش جدید ---
 }

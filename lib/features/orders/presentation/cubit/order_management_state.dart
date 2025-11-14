@@ -4,7 +4,7 @@ part of 'order_management_cubit.dart';
 abstract class OrderManagementState extends Equatable {
   const OrderManagementState();
   @override
-  List<Object?> get props => [];
+  List<Object> get props => [];
 }
 
 class OrderManagementInitial extends OrderManagementState {}
@@ -15,44 +15,49 @@ class OrderManagementError extends OrderManagementState {
   final String message;
   const OrderManagementError(this.message);
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [message];
 }
 
-// وضعیت اصلی ما: تمام لیست‌ها را در خود نگه می‌دارد
 class OrderManagementLoaded extends OrderManagementState {
-  final List<OrderEntity> pendingOrders; // تب "جدید"
-  final List<OrderEntity> activeOrders; // تب "در حال انجام"
-  final List<OrderEntity> completedOrders; // تب "تکمیل شده"
-
-  // لیستی از ID سفارش‌هایی که در حال آپدیت شدن هستند (برای نمایش لودر روی دکمه)
-  final Set<int> updatingOrderIds;
+  // --- شروع بخش اصلاح شده ---
+  final List<OrderEntity> pendingOrders; // تب ۱: جدید (Pending)
+  final List<OrderEntity>
+      preparingOrders; // تب ۲: در حال آماده‌سازی (Confirmed, Preparing)
+  final List<OrderEntity> deliveringOrders; // تب ۳: در حال ارسال (Delivering)
+  final List<OrderEntity> historyOrders; // تب ۴: تاریخچه (Delivered, Cancelled)
+  // --- پایان بخش اصلاح شده ---
+  final Set<int> updatingOrderIds; // لودر دکمه‌های هر کارت
 
   const OrderManagementLoaded({
-    this.pendingOrders = const [],
-    this.activeOrders = const [],
-    this.completedOrders = const [],
-    this.updatingOrderIds = const {},
+    required this.pendingOrders,
+    required this.preparingOrders,
+    required this.deliveringOrders,
+    required this.historyOrders,
+    required this.updatingOrderIds,
   });
 
   OrderManagementLoaded copyWith({
     List<OrderEntity>? pendingOrders,
-    List<OrderEntity>? activeOrders,
-    List<OrderEntity>? completedOrders,
+    List<OrderEntity>? preparingOrders,
+    List<OrderEntity>? deliveringOrders,
+    List<OrderEntity>? historyOrders,
     Set<int>? updatingOrderIds,
   }) {
     return OrderManagementLoaded(
       pendingOrders: pendingOrders ?? this.pendingOrders,
-      activeOrders: activeOrders ?? this.activeOrders,
-      completedOrders: completedOrders ?? this.completedOrders,
+      preparingOrders: preparingOrders ?? this.preparingOrders,
+      deliveringOrders: deliveringOrders ?? this.deliveringOrders,
+      historyOrders: historyOrders ?? this.historyOrders,
       updatingOrderIds: updatingOrderIds ?? this.updatingOrderIds,
     );
   }
 
   @override
-  List<Object?> get props => [
+  List<Object> get props => [
         pendingOrders,
-        activeOrders,
-        completedOrders,
-        updatingOrderIds,
+        preparingOrders,
+        deliveringOrders,
+        historyOrders,
+        updatingOrderIds
       ];
 }

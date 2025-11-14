@@ -36,18 +36,29 @@ import 'package:food_seller/features/product/domain/usecases/update_product_avai
 import 'package:food_seller/features/product/domain/usecases/update_product_usecase.dart';
 import 'package:food_seller/features/product/presentation/cubit/menu_management_cubit.dart';
 import 'package:food_seller/features/product/presentation/cubit/product_editor_cubit.dart';
-// *** ایمپورت‌های جدید Settings ***
 import 'package:food_seller/features/settings/data/datasources/settings_remote_datasource.dart';
 import 'package:food_seller/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:food_seller/features/settings/domain/repositories/settings_repository.dart';
 import 'package:food_seller/features/settings/domain/usecases/get_store_details_usecase.dart';
 import 'package:food_seller/features/settings/domain/usecases/get_store_reviews_usecase.dart';
+// --- ایمپورت‌های جدید ---
+import 'package:food_seller/features/settings/domain/usecases/update_store_logo_url_usecase.dart';
+import 'package:food_seller/features/settings/domain/usecases/update_store_name_usecase.dart';
+// ---
 import 'package:food_seller/features/settings/domain/usecases/update_store_status_usecase.dart';
 import 'package:food_seller/features/settings/presentation/cubit/reviews_cubit.dart';
 import 'package:food_seller/features/settings/presentation/cubit/settings_cubit.dart';
-// ***
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+// --- ایمپورت‌های جدید حسابداری ---
+import 'package:food_seller/features/accounting/data/datasources/accounting_remote_datasource.dart';
+import 'package:food_seller/features/accounting/data/repositories/accounting_repository_impl.dart';
+import 'package:food_seller/features/accounting/domain/repositories/accounting_repository.dart';
+import 'package:food_seller/features/accounting/domain/usecases/get_daily_summary_usecase.dart';
+import 'package:food_seller/features/accounting/domain/usecases/get_sales_history_usecase.dart';
+import 'package:food_seller/features/accounting/presentation/cubit/accounting_cubit.dart';
+// ---
 
 final sl = GetIt.instance;
 
@@ -159,11 +170,14 @@ Future<void> init() async {
     () => ProductRemoteDataSourceImpl(supabaseClient: sl()),
   );
 
-  // *** شروع بخش جدید Settings ***
+  // --- Settings (اصلاح شده) ---
   sl.registerFactoryParam<SettingsCubit, int, void>(
     (storeId, _) => SettingsCubit(
       getStoreDetailsUseCase: sl(),
       updateStoreStatusUseCase: sl(),
+      updateStoreNameUseCase: sl(), // <-- جدید
+      uploadImageUseCase: sl(), // <-- جدید
+      updateStoreLogoUrlUseCase: sl(), // <-- جدید
       storeId: storeId,
     ),
   );
@@ -177,6 +191,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetStoreDetailsUseCase(sl()));
   sl.registerLazySingleton(() => UpdateStoreStatusUseCase(sl()));
   sl.registerLazySingleton(() => GetStoreReviewsUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateStoreNameUseCase(sl())); // <-- جدید
+  sl.registerLazySingleton(() => UpdateStoreLogoUrlUseCase(sl())); // <-- جدید
   // Repository
   sl.registerLazySingleton<SettingsRepository>(
     () => SettingsRepositoryImpl(remoteDataSource: sl()),
@@ -185,7 +201,27 @@ Future<void> init() async {
   sl.registerLazySingleton<SettingsRemoteDataSource>(
     () => SettingsRemoteDataSourceImpl(supabaseClient: sl()),
   );
-  // *** پایان بخش جدید Settings ***
+
+  // --- Accounting (بخش جدید) ---
+  sl.registerFactoryParam<AccountingCubit, int, void>(
+    (storeId, _) => AccountingCubit(
+      getDailySummaryUseCase: sl(),
+      getSalesHistoryUseCase: sl(),
+      storeId: storeId,
+    ),
+  );
+  // UseCases
+  sl.registerLazySingleton(() => GetDailySummaryUseCase(sl()));
+  sl.registerLazySingleton(() => GetSalesHistoryUseCase(sl()));
+  // Repository
+  sl.registerLazySingleton<AccountingRepository>(
+    () => AccountingRepositoryImpl(remoteDataSource: sl()),
+  );
+  // DataSource
+  sl.registerLazySingleton<AccountingRemoteDataSource>(
+    () => AccountingRemoteDataSourceImpl(supabaseClient: sl()),
+  );
+  // --- پایان بخش جدید Accounting ---
 
   // #endregion
 }

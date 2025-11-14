@@ -14,7 +14,7 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
   final GetOrdersUseCase getOrdersUseCase;
   final ListenToOrderChangesUseCase listenToOrderChangesUseCase;
   final UpdateOrderStatusUseCase updateOrderStatusUseCase;
-  final int storeId; 
+  final int storeId;
 
   StreamSubscription? _orderSubscription;
 
@@ -22,7 +22,7 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
     required this.getOrdersUseCase,
     required this.listenToOrderChangesUseCase,
     required this.updateOrderStatusUseCase,
-    required this.storeId, 
+    required this.storeId,
   }) : super(OrderManagementInitial());
 
   String _mapFailureToMessage(Failure failure) {
@@ -34,31 +34,41 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
 
   Future<void> loadOrders() async {
     // اگر از قبل در حال لودینگ نیستیم، لودینگ را نشان بده
-    if (state is! OrderManagementLoading) {
-       emit(OrderManagementLoading());
+    if (state is! OrderManagementLoading && state is! OrderManagementLoaded) {
+      emit(OrderManagementLoading());
     }
 
+    // --- شروع بخش اصلاح شده ---
     final results = await Future.wait([
-      getOrdersUseCase(GetOrdersParams(
-          storeId: storeId, statuses: [OrderStatus.pending])),
+      // ۱. جدید
+      getOrdersUseCase(
+          GetOrdersParams(storeId: storeId, statuses: [OrderStatus.pending])),
+      // ۲. در حال آماده‌سازی
       getOrdersUseCase(GetOrdersParams(storeId: storeId, statuses: [
         OrderStatus.confirmed,
         OrderStatus.preparing,
-        OrderStatus.delivering
       ])),
+      // ۳. در حال ارسال
+      getOrdersUseCase(
+          GetOrdersParams(storeId: storeId, statuses: [OrderStatus.delivering])),
+      // ۴. تاریخچه
       getOrdersUseCase(GetOrdersParams(storeId: storeId, statuses: [
         OrderStatus.delivered,
-        OrderStatus.cancelled
+        OrderStatus.cancelled,
       ])),
     ]);
 
     final pendingResult = results[0];
-    final activeResult = results[1];
-    final completedResult = results[2];
+    final preparingResult = results[1];
+    final deliveringResult = results[2];
+    final historyResult = results[3];
 
+    // بررسی خطا برای هر ۴ درخواست
     if (pendingResult.isLeft() ||
-        activeResult.isLeft() ||
-        completedResult.isLeft()) {
+        preparingResult.isLeft() ||
+        deliveringResult.isLeft() ||
+        historyResult.isLeft()) {
+      // فقط یکی از خطاها را نمایش می‌دهیم
       pendingResult.fold(
           (failure) => emit(OrderManagementError(_mapFailureToMessage(failure))),
           (_) {});
@@ -66,10 +76,11 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
     }
 
     final pendingOrders = pendingResult.getOrElse(() => []);
-    final activeOrders = activeResult.getOrElse(() => []);
-    final completedOrders = completedResult.getOrElse(() => []);
+    final preparingOrders = preparingResult.getOrElse(() => []);
+    final deliveringOrders = deliveringResult.getOrElse(() => []);
+    final historyOrders = historyResult.getOrElse(() => []);
 
-    // *** اصلاح شد: وضعیت لودینگ دکمه‌ها را حفظ کن ***
+    // حفظ وضعیت لودینگ دکمه‌ها
     Set<int> currentUpdatingIds = {};
     if (state is OrderManagementLoaded) {
       currentUpdatingIds = (state as OrderManagementLoaded).updatingOrderIds;
@@ -77,10 +88,12 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
 
     emit(OrderManagementLoaded(
       pendingOrders: pendingOrders,
-      activeOrders: activeOrders,
-      completedOrders: completedOrders,
+      preparingOrders: preparingOrders,
+      deliveringOrders: deliveringOrders,
+      historyOrders: historyOrders,
       updatingOrderIds: currentUpdatingIds, // حفظ وضعیت لودینگ
     ));
+    // --- پایان بخش اصلاح شده ---
 
     // فقط اگر اولین بار است، به تغییرات گوش بده
     if (_orderSubscription == null) {
@@ -90,7 +103,7 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
 
   void _listenToChanges() async {
     await _orderSubscription?.cancel();
-    
+
     final failureOrStream =
         await listenToOrderChangesUseCase(ListenToOrdersParams(storeId: storeId));
 
@@ -99,10 +112,6 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
           print('Error listening to orders: ${_mapFailureToMessage(failure)}'),
       (stream) {
         _orderSubscription = stream.listen((_) {
-          // *** اصلاح شد: بهینه‌سازی ***
-          // هر تغییری که در Realtime بشنویم (insert, update, delete)
-          // ما فقط کل لیست‌ها را دوباره واکشی می‌کنیم (loadOrders).
-          // این ساده‌ترین و مطمئن‌ترین راه برای همگام‌سازی است.
           print("Realtime change detected! Refetching orders...");
           loadOrders(); // واکشی مجدد کل داده‌ها
         });
@@ -114,7 +123,8 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
     final currentState = state;
     if (currentState is! OrderManagementLoaded) return;
 
-    final updatingIds = Set<int>.from(currentState.updatingOrderIds)..add(orderId);
+    final updatingIds = Set<int>.from(currentState.updatingOrderIds)
+      ..add(orderId);
     emit(currentState.copyWith(updatingOrderIds: updatingIds));
 
     final result = await updateOrderStatusUseCase(
@@ -132,9 +142,8 @@ class OrderManagementCubit extends Cubit<OrderManagementState> {
       },
       (_) {
         // موفقیت!
-        // هیچ کاری نمی‌کنیم. Realtime (`_listenToChanges`) این تغییر را تشخیص داده
+        // Realtime (`_listenToChanges`) این تغییر را تشخیص داده
         // و `loadOrders()` را صدا می‌زند که به طور خودکار UI را رفرش می‌کند.
-        // لودر دکمه نیز در `loadOrders()` پاک خواهد شد.
       },
     );
   }
